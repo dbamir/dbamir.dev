@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amir Arsalan Pajouhi</title>
+  <meta name="description" content="Amir Arsalan Pajouhi, Computer Engineering student at Fenerbahçe University in Istanbul.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="preload" href="amir.png" as="image" fetchpriority="high">
+  <script src="boot.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="deck">
+    <div class="track">
+      <section class="page" id="about" aria-label="About">
+        <div class="intro-grid">
+          <div>
+            <h1 class="reveal i0">Amir Arsalan Pajouhi</h1>
+            <p class="role reveal i1">Computer Engineering student at Fenerbahçe University</p>
+            <p class="meta reveal i2">Istanbul, Turkey</p>
+
+            <div class="skills-block reveal i3">
+              <h2 class="label">Skills</h2>
+              <dl class="skills">
+                <div><dt>backend</dt><dd>Java · Spring Boot · SQL</dd></div>
+                <div><dt>tools</dt><dd>Git · Linux/Unix · zsh</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="portrait-wrap reveal i1">
+            <img class="portrait" src="amir.png" width="560" height="632" fetchpriority="high" alt="Portrait of Amir Arsalan Pajouhi">
+          </div>
+        </div>
+        <a class="next reveal i4" href="#contact">contact<span aria-hidden="true">↓</span></a>
+      </section>
+
+      <section class="page" id="contact" aria-labelledby="contact-title">
+        <div class="contact-inner">
+          <h2 class="label reveal i0" id="contact-title">Contact</h2>
+          <div id="cli" hidden>
+            <div class="term reveal i1">
+              <div class="term-bar" aria-hidden="true">
+                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                <span class="term-title">amir — zsh</span>
+              </div>
+              <div class="term-out" id="term-out" role="log" aria-live="polite"></div>
+              <form class="term-in" id="term-form" autocomplete="off">
+                <label class="prompt" for="term-input"><span class="t-user">amir@dbamir</span> <span class="t-path">~</span> %</label>
+                <input id="term-input" type="text" enterkeyhint="go" spellcheck="false" autocapitalize="off" autocorrect="off" placeholder="type help">
+              </form>
+            </div>
+            <div class="chips reveal i2" role="group" aria-label="Quick commands">
+              <button type="button" data-cmd="email">email</button>
+              <button type="button" data-cmd="github">github</button>
+              <button type="button" data-cmd="linkedin">linkedin</button>
+              <button type="button" data-cmd="instagram">instagram</button>
+              <button type="button" data-cmd="whatsapp">whatsapp</button>
+              <button type="button" data-cmd="projects">projects</button>
+              <button type="button" data-cmd="help">help</button>
+            </div>
+          </div>
+          <noscript>
+            <p>
+              <a href="https://github.com/dbamir">GitHub</a> ·
+              <a href="https://www.linkedin.com/in/amir-arsalan-pazhouhi-5b028b264">LinkedIn</a> ·
+              <a href="https://www.instagram.com/amirpzq/">Instagram</a> ·
+              <a href="https://wa.me/amirpzq">WhatsApp</a>
+            </p>
+          </noscript>
+        </div>
+        <footer class="reveal i3">© 2026 Amir Arsalan Pajouhi</footer>
+      </section>
+    </div>
+  </main>
+
+  <nav class="dots" id="dots" aria-label="Pages" hidden>
+    <button type="button" aria-label="About"></button>
+    <button type="button" aria-label="Contact"></button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>

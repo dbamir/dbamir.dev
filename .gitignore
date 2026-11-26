@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.vercel
+node_modules/
+
+# Local only: the original photo and helper tools never go online
+photo.jpeg
+.work/
+photo Background Removed.png
