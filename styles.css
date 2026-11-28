@@ -366,14 +366,15 @@ footer {
 }
 
 /* After it has glided in, the photo floats slowly up and down (app.js adds .is-floating).
-   It moves the image inside the box, so it never fights the box's own glide-in. */
+   It moves the image inside the box, so it never fights the box's own glide-in. The glide-in
+   rises, so the float starts by sinking: its resting spot is the top of the float. */
 .portrait-wrap.is-floating .portrait {
   animation: float 6s ease-in-out infinite;
   will-change: transform;
 }
 @keyframes float {
   0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -9px, 0); }
+  50% { transform: translate3d(0, 9px, 0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
