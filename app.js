@@ -460,39 +460,66 @@
 
   const arrow = () => span('t-arrow', '→ ');
 
-  // Profile commands print "opening github..." with dots that fill in, then go to the profile.
-  // A new command cancels one that's still waiting, so quick taps never open several tabs.
-  const OPEN_DELAY = 1500; // ms
+  // Profile commands play a little terminal loader (a spinner and a filling progress bar),
+  // then open the profile in a new tab. It all takes under a second, because Safari only
+  // lets a page open a new tab within about a second of the tap. A new command cancels one
+  // that's still loading, shown as ^C, so quick taps never open several tabs.
+  const OPEN_DELAY = 900; // ms
+  const BAR = 20; // progress bar width, in characters
+  const SPINNER = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+  const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
   let pending = null;
 
   function cancelPending() {
     if (!pending) return;
-    clearInterval(pending.dots);
+    cancelAnimationFrame(pending.frame);
     clearTimeout(pending.open);
+    pending.spin.textContent = '✗';
+    pending.spin.className = 't-error';
+    pending.title.append(span('t-error', ' ^C'));
     pending = null;
   }
 
   function openProfile(name, href) {
-    const dots = span('t-comment', '');
-    print(arrow(), 'opening ', link(name, href, true), dots); // the name stays clickable, just in case
-    let count = 0;
-    const dotTimer = setInterval(() => { dots.textContent = '.'.repeat(Math.min(++count, 3)); }, OPEN_DELAY / 4);
-    pending = {
-      dots: dotTimer,
-      open: setTimeout(() => {
-        clearInterval(dotTimer);
-        dots.textContent = '...';
-        pending = null;
-        // A new tab where the browser still allows it this long after the tap. Where it doesn't
-        // (Safari blocks late pop-ups and returns null), this tab goes to the profile instead.
-        let tab = null;
-        try {
-          tab = window.open(href, '_blank');
-          if (tab) tab.opener = null;
-        } catch {}
-        if (!tab) location.href = href;
-      }, OPEN_DELAY),
+    const spin = span('t-arrow', SPINNER[0]);
+    spin.setAttribute('aria-hidden', 'true'); // screen readers hear "opening github" once, not every frame
+    const title = print(spin, ' opening ', link(name, href, true)); // the name stays clickable, just in case
+    const filled = span('t-user', '');
+    const empty = span('t-dim', '░'.repeat(BAR));
+    const percent = span('t-cmd', '  0%');
+    print('[', filled, empty, '] ', percent).setAttribute('aria-hidden', 'true');
+
+    const state = { spin, title, frame: 0, open: 0 };
+    const start = performance.now();
+    const draw = (now) => {
+      const t = Math.min(1, (now - start) / (OPEN_DELAY - 80));
+      const done = easeInOut(t);
+      const cells = Math.round(done * BAR);
+      filled.textContent = '█'.repeat(cells);
+      empty.textContent = '░'.repeat(BAR - cells);
+      percent.textContent = `${Math.round(done * 100)}%`.padStart(4);
+      if (t < 1) {
+        spin.textContent = SPINNER[Math.floor((now - start) / 70) % SPINNER.length];
+        state.frame = requestAnimationFrame(draw);
+      } else {
+        spin.textContent = '✓';
+        spin.className = 't-user';
+      }
     };
+    state.frame = requestAnimationFrame(draw);
+
+    // Scheduled right away (not from the animation), so the browser still counts it as part of the tap.
+    state.open = setTimeout(() => {
+      pending = null;
+      let tab = null;
+      try {
+        tab = window.open(href, '_blank');
+        if (tab) tab.opener = null;
+      } catch {}
+      if (tab) print(span('t-comment', '// opened in a new tab'));
+      else print(span('t-error', 'new tab blocked by the browser.'), ' tap ', link(name, href, true));
+    }, OPEN_DELAY);
+    pending = state;
   }
 
   function echo(cmd) {
