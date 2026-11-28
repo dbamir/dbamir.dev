@@ -461,7 +461,7 @@
     },
     help() {
       print(span('t-key', 'contact:'), '  ', span('t-cmd', 'email  github  linkedin  instagram  whatsapp'));
-      print(span('t-key', 'other:'), '    ', span('t-cmd', 'projects  whoami  ls  clear  crash'));
+      print(span('t-key', 'other:'), '    ', span('t-cmd', 'whoami  ls  clear  crash'));
     },
     email() {
       const line = print(arrow(), link(email, 'mailto:' + email));
@@ -481,10 +481,6 @@
     },
     whatsapp() {
       print(arrow(), link('wa.me/amirpzq', whatsapp, true));
-    },
-    projects() {
-      print(span('t-type', 'dbamir.dev'), '  this site · HTML, CSS, JavaScript · hosted on Vercel');
-      print(arrow(), 'code: ', link('github.com/dbamir/dbamir.dev', 'https://github.com/dbamir/dbamir.dev', true));
     },
     whoami() {
       print(span('t-type', 'Amir Arsalan Pajouhi'));
