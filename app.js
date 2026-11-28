@@ -101,7 +101,10 @@
     recent.length >= 6 && average(recent.slice(-2)) > average(recent.slice(-6, -2)) * 1.6 && average(recent.slice(-2)) > 10;
 
   addEventListener('wheel', (event) => {
-    if (event.ctrlKey) return; // ctrl + wheel and trackpad pinch are zooming
+    if (event.ctrlKey) { // ctrl + wheel and trackpad pinch would zoom the page
+      event.preventDefault();
+      return;
+    }
     const now = performance.now();
     const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height() : 1;
     const dy = event.deltaY * unit;
@@ -141,11 +144,17 @@
   }, { passive: true });
 
   deck.addEventListener('touchmove', (event) => {
-    if (!touch || event.touches.length !== 1) { // two fingers: let people pinch-zoom
-      touch = null;
-      return;
-    }
     event.preventDefault(); // nothing moves under the finger
+    if (event.touches.length !== 1) touch = null; // two fingers: not a swipe
+  }, { passive: false });
+
+  // No pinch-zooming anywhere: Safari ignores the viewport tag's user-scalable=no,
+  // so its pinch gestures and two-finger moves are cancelled here.
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(type, (event) => event.preventDefault(), { passive: false });
+  }
+  document.addEventListener('touchmove', (event) => {
+    if (event.touches.length > 1) event.preventDefault();
   }, { passive: false });
 
   deck.addEventListener('touchend', (event) => {

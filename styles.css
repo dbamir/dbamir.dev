@@ -52,6 +52,13 @@ body {
 }
 a { color: var(--fg); text-underline-offset: 3px; }
 
+/* The page can't be zoomed by double-tap or pinch (app.js blocks the rest), and text
+   can't be selected or long-pressed. The terminal's input still takes typing normally. */
+html { touch-action: pan-x pan-y; }
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }
+
 /* Without JavaScript, the two pages simply stack and scroll normally. */
 .page {
   position: relative;
