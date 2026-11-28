@@ -460,64 +460,78 @@
 
   const arrow = () => span('t-arrow', '→ ');
 
-  // Profile commands play a little terminal loader (a spinner and a filling progress bar),
-  // then open the profile in a new tab. It all takes under a second, because Safari only
-  // lets a page open a new tab within about a second of the tap. A new command cancels one
-  // that's still loading, shown as ^C, so quick taps never open several tabs.
+  // Profile commands show one line with a spinner and a thin progress bar, then open the
+  // profile in a new tab. The bar stutters forward in uneven jumps with pauses, different
+  // every time, like a real download. It all takes under a second, because Safari only lets
+  // a page open a new tab within about a second of the tap. A new command cancels one that's
+  // still loading, shown as ^C, so quick taps never open several tabs.
   const OPEN_DELAY = 900; // ms
-  const BAR = 20; // progress bar width, in characters
+  const BAR = 8; // progress bar width, in characters (keeps the line on one row on a phone)
   const SPINNER = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
-  const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
   let pending = null;
+
+  // A few uneven jumps with pauses between them (one of them long), ending at 100%
+  // just before the tab opens. Returns [time in ms, percent] pairs.
+  function stutter() {
+    const steps = [];
+    let at = 0;
+    let percent = 0;
+    const longPause = Math.floor(Math.random() * 3) + 1;
+    while (percent < 100) {
+      at += (40 + Math.random() * 120) * (steps.length === longPause ? 3 : 1);
+      percent = Math.min(100, percent + 6 + Math.random() * 24);
+      steps.push([at, Math.round(percent)]);
+    }
+    const fit = (OPEN_DELAY - 100) / at;
+    return steps.map(([time, value]) => [time * fit, value]);
+  }
 
   function cancelPending() {
     if (!pending) return;
     cancelAnimationFrame(pending.frame);
     clearTimeout(pending.open);
-    pending.spin.textContent = '✗';
-    pending.spin.className = 't-error';
-    pending.title.append(span('t-error', ' ^C'));
+    pending.line.replaceChildren(span('t-error', '✗'), ' opening ', pending.name, span('t-error', ' ^C'));
     pending = null;
   }
 
   function openProfile(name, href) {
     const spin = span('t-arrow', SPINNER[0]);
-    spin.setAttribute('aria-hidden', 'true'); // screen readers hear "opening github" once, not every frame
-    const title = print(spin, ' opening ', link(name, href, true)); // the name stays clickable, just in case
     const filled = span('t-user', '');
-    const empty = span('t-dim', '░'.repeat(BAR));
-    const percent = span('t-cmd', '  0%');
-    print('[', filled, empty, '] ', percent).setAttribute('aria-hidden', 'true');
+    const empty = span('t-dim', '━'.repeat(BAR));
+    const percent = span('t-dim', '0%');
+    // Screen readers hear "opening github" once, not every frame of the animation.
+    for (const part of [spin, filled, empty, percent]) part.setAttribute('aria-hidden', 'true');
+    const nameLink = link(name, href, true); // stays clickable, just in case
+    const line = print(spin, ' opening ', nameLink, ' ', filled, empty, ' ', percent);
+    line.className = 't-loader';
 
-    const state = { spin, title, frame: 0, open: 0 };
+    const steps = stutter();
+    const state = { line, name: nameLink, frame: 0, open: 0 };
     const start = performance.now();
     const draw = (now) => {
-      const t = Math.min(1, (now - start) / (OPEN_DELAY - 80));
-      const done = easeInOut(t);
-      const cells = Math.round(done * BAR);
-      filled.textContent = '█'.repeat(cells);
-      empty.textContent = '░'.repeat(BAR - cells);
-      percent.textContent = `${Math.round(done * 100)}%`.padStart(4);
-      if (t < 1) {
-        spin.textContent = SPINNER[Math.floor((now - start) / 70) % SPINNER.length];
-        state.frame = requestAnimationFrame(draw);
-      } else {
-        spin.textContent = '✓';
-        spin.className = 't-user';
-      }
+      const elapsed = now - start;
+      let done = 0;
+      for (const [time, value] of steps) if (time <= elapsed) done = value;
+      const cells = Math.round((done / 100) * BAR);
+      filled.textContent = '━'.repeat(cells);
+      empty.textContent = '━'.repeat(BAR - cells);
+      percent.textContent = `${done}%`;
+      spin.textContent = SPINNER[Math.floor(elapsed / 70) % SPINNER.length];
+      state.frame = requestAnimationFrame(draw);
     };
     state.frame = requestAnimationFrame(draw);
 
     // Scheduled right away (not from the animation), so the browser still counts it as part of the tap.
     state.open = setTimeout(() => {
+      cancelAnimationFrame(state.frame);
       pending = null;
       let tab = null;
       try {
         tab = window.open(href, '_blank');
         if (tab) tab.opener = null;
       } catch {}
-      if (tab) print(span('t-comment', '// opened in a new tab'));
-      else print(span('t-error', 'new tab blocked by the browser.'), ' tap ', link(name, href, true));
+      if (tab) line.replaceChildren(span('t-user', '✓'), ' opened ', nameLink, span('t-dim', ' in a new tab'));
+      else line.replaceChildren(span('t-error', '✗'), ' new tab blocked. tap ', nameLink);
     }, OPEN_DELAY);
     pending = state;
   }

@@ -255,6 +255,7 @@ h1 {
 .t-comment { color: var(--t-comment); font-style: italic; }
 .t-error { color: var(--t-error); }
 .t-dim { color: var(--muted); }
+.term-out .t-loader { white-space: pre; overflow: hidden; } /* the loader line never wraps */
 
 /* Quick-command buttons: plain white (black in light mode) at rest. On hover, and while
    pressed on phones, each fills with its app's color and presses in slightly.
