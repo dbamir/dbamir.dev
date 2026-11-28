@@ -365,7 +365,19 @@ footer {
   transform: translate3d(0, 2.25rem, 0);
 }
 
+/* After it has glided in, the photo floats slowly up and down (app.js adds .is-floating).
+   It moves the image inside the box, so it never fights the box's own glide-in. */
+.portrait-wrap.is-floating .portrait {
+  animation: float 6s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -9px, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .portrait-wrap.is-floating .portrait { animation: none; }
   .js .reveal, .js .is-active .reveal { transform: none; }
   .js .is-active .reveal { transition: opacity 0.4s ease; transition-delay: 0s; }
   .next span { animation: none; }

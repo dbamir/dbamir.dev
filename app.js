@@ -241,6 +241,26 @@
     (photo.decode ? photo.decode() : Promise.resolve()).then(showPhoto, showPhoto);
   }
 
+  // Once the photo has fully glided in, it starts floating gently (.is-floating in the CSS).
+  // It only stops after its page has slid off screen, so the float never overlaps the
+  // glide-in and its start and stop are never seen. Not with Reduce Motion (there's no glide
+  // to wait for), nor when the page had to be shrunk to fit: Safari mis-draws moving things
+  // inside shrunk content.
+  if (photoBox) {
+    const aboutPage = photoBox.closest('.page');
+    photoBox.addEventListener('transitionend', (event) => {
+      if (event.target !== photoBox || event.propertyName !== 'transform') return;
+      const arrived = aboutPage.classList.contains('is-active') && photoBox.classList.contains('is-loaded');
+      const shrunk = Boolean(photoBox.closest('.intro-grid').style.zoom);
+      if (arrived && !shrunk && !window.crashed) photoBox.classList.add('is-floating');
+    });
+    aboutPage.addEventListener('transitionend', (event) => {
+      if (event.target === aboutPage && event.propertyName === 'transform' && !aboutPage.classList.contains('is-active')) {
+        photoBox.classList.remove('is-floating');
+      }
+    });
+  }
+
   // Start: show the first page, then let its content glide in.
   fit();
   setTransition('none');
@@ -462,10 +482,12 @@
 
   // Profile commands show one line with a spinner and a thin progress bar, then open the
   // profile in a new tab. The bar stutters forward in uneven jumps with pauses, different
-  // every time, like a real download. It all takes under a second, because Safari only lets
-  // a page open a new tab within about a second of the tap. A new command cancels one that's
-  // still loading, shown as ^C, so quick taps never open several tabs.
-  const OPEN_DELAY = 900; // ms
+  // every time, like a real download. A new command cancels one that's still loading,
+  // shown as ^C, so quick taps never open several tabs.
+  // How long it can take depends on the browser: a new tab is only allowed shortly after
+  // the tap. Safari (every iPhone browser, and Safari on Mac, which has GestureEvent) blocks
+  // it at 1 second; Chrome, Firefox and Edge allow a few seconds.
+  const OPEN_DELAY = 'GestureEvent' in window ? 850 : 2000; // ms
   const BAR = 8; // progress bar width, in characters (keeps the line on one row on a phone)
   const SPINNER = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
   let pending = null;
