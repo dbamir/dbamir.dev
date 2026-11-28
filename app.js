@@ -261,43 +261,81 @@
     });
   }
 
-  // On a computer, the floating photo also drifts a little away from the mouse, with a
-  // soft delay. It uses the separate `translate` property, so it adds to the float instead
-  // of replacing it. It only reacts while the photo is floating (fully arrived), and eases
-  // back to rest when the mouse leaves the window or the page changes.
+  // On a computer, the floating photo also drifts a little away from the mouse. It moves on a
+  // soft spring, so it starts gently, glides, and settles without snapping. When it first
+  // notices the mouse (and again after the mouse leaves and comes back) the effect builds up
+  // over a second and a half, so the first reaction is calm. It uses the separate `translate`
+  // property, so it adds to the float instead of replacing it. It only reacts while the photo
+  // is floating (fully arrived), and drifts back to the center when the mouse leaves the
+  // window or the page changes.
   if (photo && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    const MAX_SHIFT = 16; // px
-    const unit = (value) => Math.max(-1, Math.min(1, value));
-    let target = { x: 0, y: 0 };
-    const current = { x: 0, y: 0 };
-    let frame = 0;
-
-    const follow = () => {
-      current.x += (target.x - current.x) * 0.07;
-      current.y += (target.y - current.y) * 0.07;
-      const { x, y } = current;
-      photo.style.translate = `${(-x * MAX_SHIFT).toFixed(2)}px ${(-y * MAX_SHIFT).toFixed(2)}px`; // away from the mouse
-      const settled = Math.abs(target.x - x) + Math.abs(target.y - y) < 0.001;
-      frame = settled ? 0 : requestAnimationFrame(follow);
+    const MAX_SHIFT = 16; // px, at full strength
+    const SPEED = 4.2; // how quickly the spring follows (higher is snappier)
+    const DAMPING = 0.9; // 1 settles with no overshoot; a touch under lands softly
+    const EASE_IN = 1500; // ms for the first reaction to build up to full strength
+    // -1..1, leveling off smoothly toward the window edges instead of stopping hard
+    const soft = (value) => {
+      const v = Math.max(-1, Math.min(1, value));
+      return 1.5 * v - 0.5 * v ** 3;
     };
-    const aimAt = (x, y) => {
-      target = { x, y };
-      if (!frame) frame = requestAnimationFrame(follow);
+
+    const mouse = { x: 0, y: 0 }; // where the mouse is, around the photo's center
+    const position = { x: 0, y: 0 };
+    const velocity = { x: 0, y: 0 };
+    let tracking = false;
+    let trackingSince = 0;
+    let frame = 0;
+    let lastTime = 0;
+
+    const strength = (now) => {
+      if (!tracking) return 0;
+      const t = Math.min(1, (now - trackingSince) / EASE_IN);
+      return t * t * (3 - 2 * t); // eases in and out
+    };
+
+    const step = (now) => {
+      const dt = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 1 / 60;
+      lastTime = now;
+      const s = strength(now);
+      let moving = tracking && s < 1;
+      for (const axis of ['x', 'y']) {
+        const goal = mouse[axis] * s;
+        const pull = SPEED * SPEED * (goal - position[axis]) - 2 * DAMPING * SPEED * velocity[axis];
+        velocity[axis] += pull * dt;
+        position[axis] += velocity[axis] * dt;
+        if (Math.abs(goal - position[axis]) > 0.0005 || Math.abs(velocity[axis]) > 0.0005) moving = true;
+      }
+      photo.style.translate = `${(-position.x * MAX_SHIFT).toFixed(2)}px ${(-position.y * MAX_SHIFT).toFixed(2)}px`; // away from the mouse
+      if (moving) {
+        frame = requestAnimationFrame(step);
+      } else {
+        frame = 0;
+        lastTime = 0;
+      }
+    };
+    const wake = () => {
+      if (!frame) frame = requestAnimationFrame(step);
+    };
+    const letGo = () => {
+      tracking = false;
+      wake();
     };
 
     addEventListener('pointermove', (event) => {
       if (event.pointerType !== 'mouse') return;
-      if (!photoBox.classList.contains('is-floating') || reduceMotion.matches) return aimAt(0, 0);
-      // Where the mouse is, from the photo's center, as -1..1 across half the window
+      if (!photoBox.classList.contains('is-floating') || reduceMotion.matches) return letGo();
       const box = photoBox.getBoundingClientRect();
-      aimAt(
-        unit((event.clientX - (box.left + box.width / 2)) / (innerWidth / 2)),
-        unit((event.clientY - (box.top + box.height / 2)) / (innerHeight / 2)),
-      );
+      mouse.x = soft((event.clientX - (box.left + box.width / 2)) / (innerWidth / 2));
+      mouse.y = soft((event.clientY - (box.top + box.height / 2)) / (innerHeight / 2));
+      if (!tracking) {
+        tracking = true;
+        trackingSince = performance.now();
+      }
+      wake();
     });
-    document.documentElement.addEventListener('mouseleave', () => aimAt(0, 0));
+    document.documentElement.addEventListener('mouseleave', letGo);
     new MutationObserver(() => {
-      if (!photoBox.classList.contains('is-floating')) aimAt(0, 0);
+      if (!photoBox.classList.contains('is-floating')) letGo();
     }).observe(photoBox, { attributes: true, attributeFilter: ['class'] });
   }
 
