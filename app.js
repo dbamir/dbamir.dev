@@ -451,6 +451,41 @@
 
   const arrow = () => span('t-arrow', '→ ');
 
+  // Profile commands print "opening github..." with dots that fill in, then go to the profile.
+  // A new command cancels one that's still waiting, so quick taps never open several tabs.
+  const OPEN_DELAY = 1500; // ms
+  let pending = null;
+
+  function cancelPending() {
+    if (!pending) return;
+    clearInterval(pending.dots);
+    clearTimeout(pending.open);
+    pending = null;
+  }
+
+  function openProfile(name, href) {
+    const dots = span('t-comment', '');
+    print(arrow(), 'opening ', link(name, href, true), dots); // the name stays clickable, just in case
+    let count = 0;
+    const dotTimer = setInterval(() => { dots.textContent = '.'.repeat(Math.min(++count, 3)); }, OPEN_DELAY / 4);
+    pending = {
+      dots: dotTimer,
+      open: setTimeout(() => {
+        clearInterval(dotTimer);
+        dots.textContent = '...';
+        pending = null;
+        // A new tab where the browser still allows it this long after the tap. Where it doesn't
+        // (Safari blocks late pop-ups and returns null), this tab goes to the profile instead.
+        let tab = null;
+        try {
+          tab = window.open(href, '_blank');
+          if (tab) tab.opener = null;
+        } catch {}
+        if (!tab) location.href = href;
+      }, OPEN_DELAY),
+    };
+  }
+
   function echo(cmd) {
     print(span('t-user', 'amir@dbamir'), ' ', span('t-path', '~'), ' % ', span('t-cmd', cmd));
   }
@@ -471,16 +506,16 @@
       }, () => {});
     },
     github() {
-      print(arrow(), link('github.com/dbamir', github, true));
+      openProfile('github', github);
     },
     linkedin() {
-      print(arrow(), link('linkedin.com/in/amir-arsalan-pazhouhi', linkedin, true));
+      openProfile('linkedin', linkedin);
     },
     instagram() {
-      print(arrow(), link('@amirpzq', instagram, true));
+      openProfile('instagram', instagram);
     },
     whatsapp() {
-      print(arrow(), link('wa.me/amirpzq', whatsapp, true));
+      openProfile('whatsapp', whatsapp);
     },
     whoami() {
       print(span('t-type', 'Amir Arsalan Pajouhi'));
@@ -513,6 +548,7 @@
   let historyIndex = 0;
 
   function run(raw) {
+    cancelPending();
     const cmd = raw.trim();
     echo(cmd);
     if (!cmd) return;
