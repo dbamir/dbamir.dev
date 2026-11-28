@@ -261,14 +261,12 @@
     });
   }
 
-  // On a computer, the floating photo also turns a little toward the mouse, like a card
-  // tilting in 3D, and follows it with a soft delay. It uses the separate `translate` and
-  // `rotate` properties, so it adds to the float instead of replacing it. It only reacts
-  // while the photo is floating (fully arrived), and eases back to rest when the mouse
-  // leaves the window or the page changes.
+  // On a computer, the floating photo also drifts a little away from the mouse, with a
+  // soft delay. It uses the separate `translate` property, so it adds to the float instead
+  // of replacing it. It only reacts while the photo is floating (fully arrived), and eases
+  // back to rest when the mouse leaves the window or the page changes.
   if (photo && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    const MAX_TILT = 8; // degrees
-    const MAX_SHIFT = 12; // px
+    const MAX_SHIFT = 16; // px
     const unit = (value) => Math.max(-1, Math.min(1, value));
     let target = { x: 0, y: 0 };
     const current = { x: 0, y: 0 };
@@ -278,10 +276,7 @@
       current.x += (target.x - current.x) * 0.07;
       current.y += (target.y - current.y) * 0.07;
       const { x, y } = current;
-      const tilt = Math.min(1, Math.hypot(x, y)) * MAX_TILT; // corners don't tilt further than the sides
-      photo.style.translate = `${(x * MAX_SHIFT).toFixed(2)}px ${(y * MAX_SHIFT).toFixed(2)}px`;
-      // Turning around the axis at right angles to the mouse direction: the side nearest the mouse leans away.
-      photo.style.rotate = tilt > 0.01 ? `${(-y).toFixed(4)} ${x.toFixed(4)} 0 ${tilt.toFixed(2)}deg` : '';
+      photo.style.translate = `${(-x * MAX_SHIFT).toFixed(2)}px ${(-y * MAX_SHIFT).toFixed(2)}px`; // away from the mouse
       const settled = Math.abs(target.x - x) + Math.abs(target.y - y) < 0.001;
       frame = settled ? 0 : requestAnimationFrame(follow);
     };
