@@ -114,7 +114,7 @@ h1 {
 }
 .role { margin: 0; font-size: clamp(1.15rem, 2vw, 1.5rem); }
 .meta { margin: 0.5rem 0 0; color: var(--muted); font: 1rem var(--mono); }
-.skills-block { margin-top: clamp(1.5rem, 6svh, 3.5rem); max-width: 32rem; }
+.skills-block { margin-top: clamp(1.5rem, 6svh, 3.5rem); max-width: 36rem; }
 .skills { margin: 0; }
 .skills div {
   display: grid;
@@ -126,7 +126,25 @@ h1 {
 }
 .skills div:last-child { border-bottom: 1px solid var(--line); }
 .skills dt { color: var(--muted); font: 0.9375rem/1.95 var(--mono); }
-.skills dd { margin: 0; }
+/* Each skill sits before a "·". When a row wraps, the list is pulled left by one
+   dot's width and the overflow is cut off, so no line ever starts with a stray dot,
+   and a skill name never breaks across two lines. */
+.skills dd { margin: 0; overflow: hidden; }
+.skills ul {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 0 -1em;
+  padding: 0;
+  list-style: none;
+}
+.skills li { white-space: nowrap; }
+.skills li::before {
+  content: "·";
+  content: "·" / ""; /* screen readers skip the dot */
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+}
 .portrait {
   display: block;
   width: clamp(14rem, 30vw, 25rem);
