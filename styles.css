@@ -369,7 +369,7 @@ footer {
    It moves the image inside the box, so it never fights the box's own glide-in. */
 .portrait-wrap.is-floating .portrait {
   animation: float 6s ease-in-out infinite;
-  will-change: transform, translate;
+  will-change: transform;
 }
 @keyframes float {
   0%, 100% { transform: translate3d(0, 0, 0); }
