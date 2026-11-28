@@ -451,10 +451,17 @@ footer {
   .dots { display: none; } /* on phones you swipe; the dots would sit on top of the text */
   .intro-grid { grid-template-columns: 1fr; gap: 0.75rem; }
   .portrait-wrap { order: -1; }
-  .portrait { width: min(11rem, 24svh); }
+  /* Compact enough that the page fits a phone screen without fit() shrinking it:
+     Safari makes the content jump once when shrunk content finishes gliding in. */
+  .portrait { width: min(8.5rem, 19svh); }
   h1 { font-size: clamp(2.25rem, 10vw, 3rem); margin-bottom: 0.75rem; }
-  .skills-block { margin-top: 1.5rem; }
-  .skills div { font-size: 1rem; grid-template-columns: 5.5rem 1fr; padding: 0.6rem 0; }
+  .role { font-size: 1rem; }
+  .skills-block { margin-top: 1rem; }
+  .label { margin-bottom: 0.6rem; }
+  .page { padding-top: 1.5rem; }
+  .next { margin-top: 0.75rem; }
+  .skills div { font-size: 0.875rem; grid-template-columns: 4.75rem 1fr; gap: 0.75rem; padding: 0.3rem 0; }
+  .skills dt { font-size: 0.8125rem; }
   .term { font-size: 0.875rem; }
   .term-in input { font-size: 16px; }
   .term-out { height: clamp(7rem, 30svh, 16rem); padding: 0.9rem 1rem 0; }
